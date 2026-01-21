@@ -17,35 +17,20 @@
 
 ## 📑 Table of Contents
 
-- [🏨 HotelFinder Pro: Intelligent Multi-Agent Travel Assistant](#-hotelfinder-pro-intelligent-multi-agent-travel-assistant)
-    - ["Stop browsing, start discovering. Let AI agents do the research for you."](#stop-browsing-start-discovering-let-ai-agents-do-the-research-for-you)
-  - [📑 Table of Contents](#-table-of-contents)
-  - [🎯 Project Overview](#-project-overview)
-    - [✨ Key Features](#-key-features)
-  - [� Problem Statement \& Motivation](#-problem-statement--motivation)
-    - [The Problem](#the-problem)
-    - [The Solution](#the-solution)
-  - [� Quick Start](#-quick-start)
-  - [📦 Detailed Installation \& Setup](#-detailed-installation--setup)
-    - [Option A: Using Conda (Recommended for Windows)](#option-a-using-conda-recommended-for-windows)
-    - [Option B: Using uv (Fastest)](#option-b-using-uv-fastest)
-    - [Option C: Using Python venv](#option-c-using-python-venv)
-  - [🏗️ System Architecture](#️-system-architecture)
-  - [⚙️ Configuration Guide](#️-configuration-guide)
-    - [1. Environment Variables](#1-environment-variables)
-    - [2. LLM Engine Options](#2-llm-engine-options)
-  - [� Multi-Agent Workflow](#-multi-agent-workflow)
-    - [🤵 Agent 1: The Hotels Specialist](#-agent-1-the-hotels-specialist)
-    - [🤵 Agent 2: The Travel Summarizer](#-agent-2-the-travel-summarizer)
-  - [🛠️ Implementation Details](#️-implementation-details)
-    - [Browserbase Tool (`browserbase.py`)](#browserbase-tool-browserbasepy)
-    - [Kayak Search Tool (`kayak.py`)](#kayak-search-tool-kayakpy)
-  - [� Troubleshooting](#-troubleshooting)
-    - [1. Connection Error / Browserbase](#1-connection-error--browserbase)
-    - [2. LLM Serialization Error](#2-llm-serialization-error)
-    - [3. LiteLLM Missing](#3-litellm-missing)
-    - [4. Windows Execution Policy](#4-windows-execution-policy)
-  - [📈 Professional Repair Log Summary](#-professional-repair-log-summary)
+1.  [🎯 Project Overview](#-project-overview)
+2.  [💡 Problem Statement](#-problem-statement--motivation)
+3.  [🚀 Quick Start](#-quick-start)
+4.  [📦 Detailed Installation & Setup](#-detailed-installation--setup)
+    - [Option A: Conda (Windows Recommended)](#option-a-using-conda-recommended-for-windows)
+    - [Option B: uv (Performance Choice)](#option-b-using-uv-fastest)
+    - [Option C: Standard Virtualenv](#option-c-using-python-venv)
+5.  [🏗️ System Architecture](#-system-architecture)
+6.  [⚙️ Configuration & Environment](#-configuration--environment)
+7.  [🔍 Multi-Agent Workflow](#-multi-agent-workflow)
+8.  [🛠️ Implementation Details](#-implementation-details)
+9.  [🧪 Usage & Examples](#-usage--examples)
+10. [🚨 Troubleshooting & FAQ](#-troubleshooting)
+11. [📈 Professional Repair Log](#-professional-repair-log-summary)
 
 ---
 
@@ -53,35 +38,31 @@
 
 **HotelFinder Pro** is a state-of-the-art multi-agent AI system designed to automate the complex process of hotel search and pricing comparison. By orchestrating specialized agents powered by **CrewAI**, the system navigates real-time travel data via **Browserbase** headless browsers, evaluates offers, and synthesizes the best results into a clean, actionable report.
 
-### ✨ Key Features
-- **Intelligent Reasoning**: Agents don't just search; they evaluate amenities, ratings, and value-for-money.
-- **Robust Scraping**: Powered by Browserbase to handle dynamic JavaScript content on Kayak.com.
-- **Provider Comparison**: Gathers rates from multiple booking platforms automatically.
-- **Flexible LLM Backend**: Supports local execution (**DeepSeek-R1 via Ollama**) or cloud speed (**Groq**, **OpenAI**).
-- **Proactive Error Handling**: Built-in validation and graceful fallback mechanisms.
-
 ---
 
-## � Problem Statement & Motivation
+## 💡 Problem Statement & Motivation
 
 ### The Problem
-Traditional travel research is **fragmented and time-consuming**. A user typically opens 5-10 tabs, manually tracks prices across Kayak, Booking.com, and Hotels.com, and struggles to compare amenities side-by-side while dealing with dynamic pricing fluctuations.
+Finding the best hotel deals online is a time-consuming and fragmented process:
+1.  **Information Overload**: Users manually browse multiple booking platforms.
+2.  **Price Comparison Complexity**: Comparing prices across providers requires manual tracking.
+3.  **Time-Intensive Research**: Evaluating amenities, ratings, and locations takes significant effort.
 
 ### The Solution
-HotelFinder Pro centralizes this entire workflow. It uses **Agentic AI** to simulate the behavior of a human researcher—navigating sites, extracting data, and comparing results—but at a scale and speed impossible for humans.
+HotelFinder Pro centralizes this entire workflow using **Agentic AI**. It acts as a digital travel assistant that searches, scrapes, analyzes, and presents structured recommendations in minutes.
 
 ---
 
-## � Quick Start
+## 🚀 Quick Start
 
-If you already have your API keys ready, follow these three steps to be up and running in 2 minutes:
+Follow these three steps to be up and running in 2 minutes:
 
 ```powershell
 # 1. Clone & Enter
 git clone https://github.com/itsA-D/NomadIQ.git
 cd hotel-booking-crew
 
-# 2. Setup Environment (Windows/Conda)
+# 2. Setup (Windows/Conda)
 conda create -n hotelbai python=3.12 -y
 conda activate hotelbai
 pip install -r requirements.txt
@@ -96,16 +77,23 @@ streamlit run app.py
 ## 📦 Detailed Installation & Setup
 
 ### Option A: Using Conda (Recommended for Windows)
-Perfect for users who want isolated, reproducible environments.
+Perfect for managing Python versions and system-level dependencies.
 ```powershell
-conda create -n hotel-booking-crew python=3.12 -y
-conda activate hotel-booking-crew
+# Create environment
+conda create -n hotelbai python=3.12 -y
+conda activate hotelbai
+
+# Install dependencies
 pip install -r requirements.txt
 playwright install chromium
+
+# Useful Conda Commands:
+# conda env list          # List all environments
+# conda env export > env.yml # For sharing
 ```
 
 ### Option B: Using uv (Fastest)
-The modern choice for dependency resolution (10-100x faster than pip).
+Modern dependency manager that is 10-100x faster than pip.
 ```powershell
 pip install uv
 uv sync
@@ -113,11 +101,11 @@ playwright install chromium
 ```
 
 ### Option C: Using Python venv
-No external tools required.
+Standard built-in virtual environment.
 ```bash
 python -m venv .venv
-# On Windows: .venv\Scripts\activate
-# On macOS/Linux: source .venv/bin/activate
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
 ```
@@ -126,105 +114,98 @@ playwright install chromium
 
 ## 🏗️ System Architecture
 
-HotelFinder Pro uses a **Sequential Hierarchical** architecture where tasks are delegated across specialized layers.
+HotelFinder Pro uses a **Sequential Hierarchical** architecture.
 
-```mermaid
-graph TD
-    UI[Streamlit UI] --> Manager[CrewAI Orchestrator]
-    Manager --> HA[Hotels Agent]
-    Manager --> SA[Summarize Agent]
-    
-    HA --> KT[Kayak URL Tool]
-    HA --> BT[Browserbase Scraping Tool]
-    BT --> Cloud[Browserbase Cloud Browser]
-    Cloud --> Site[Kayak.com]
-    
-    Site --Raw HTML--> BT
-    BT --Markdown Text--> HA
-    HA --Hotel List--> SA
-    SA --Final Report--> UI
-```
+### Architecture Layers:
+1.  **User Interface Layer (Streamlit)**: Captures input and renders formatted markdown results.
+2.  **Orchestration Layer (CrewAI)**: Coordinates roles, tasks, and inter-agent communication.
+3.  **Tool Layer**: 
+    - **Kayak Tool**: Predictable URL construction logic.
+    - **Browserbase Tool**: Secure, cloud-based headless browser automation.
+4.  **LLM Layer**: Reasoning engine (DeepSeek-R1, Groq, or OpenAI).
 
 ---
 
-## ⚙️ Configuration Guide
+## ⚙️ Configuration & Environment
 
-### 1. Environment Variables
 Create a `.env` file in the project root:
 ```env
-# REQUIRED: Get these from https://browserbase.ai
-BROWSERBASE_API_KEY=your_key_here
-BROWSERBASE_PROJECT_ID=your_id_here
+# REQUIRED: https://browserbase.ai
+BROWSERBASE_API_KEY=your_key
+BROWSERBASE_PROJECT_ID=your_id
 
-# CLOUD LLM (Pick One)
-GROQ_API_KEY=your_groq_key_here  # Recommended: Free & Fast
-OPENAI_API_KEY=your_openai_key_here # Standard but Paid
+# LLM BACKENDS (Pick One)
+GROQ_API_KEY=your_key    # Fast/Free (Default)
+OPENAI_API_KEY=your_key  # High Quality (Paid)
 ```
 
-### 2. LLM Engine Options
-- **Groq (Default in `app.py`)**: Uses `llama-3.3-70b-versatile`. Extremely fast.
-- **Ollama (Local)**: Pull the model: `ollama pull deepseek-r1`.
-- **OpenAI**: Requires `app_openai.py`.
+### LLM Engine Configuration:
+The app supports multiple backends. Update `load_llm()` in `app.py`:
+- **Groq**: `LLM(model="groq/llama-3.3-70b-versatile")`
+- **Ollama**: `LLM(model="ollama/deepseek-r1")`
+- **OpenAI**: `LLM(model="gpt-4o-mini")`
 
 ---
 
-## � Multi-Agent Workflow
+## 🔍 Multi-Agent Workflow
 
 ### 🤵 Agent 1: The Hotels Specialist
-- **Role**: Search and data extraction expert.
-- **Capabilities**: Expert at constructing specific search queries and identifying data patterns in raw HTML.
-- **Tools**: `kayak_hotels` (URL generation), `browserbase` (Scraping).
+- **Role**: Search and data collection.
+- **Goal**: Find top hotels based on pricing, ratings, and location.
+- **Tools**: `kayak_hotels`, `browserbase`.
 
 ### 🤵 Agent 2: The Travel Summarizer
-- **Role**: Data analyst and presentation expert.
-- **Capabilities**: Compares pricing across providers and highlights the "Best Value" for the user.
-- **Output**: Generates the final 5-hotel recommendation list.
+- **Role**: Data analysis and presentation.
+- **Goal**: Synthesize raw data into a user-friendly report with clear booking links.
+- **Output**: 5 best recommendations.
 
 ---
 
 ## 🛠️ Implementation Details
 
 ### Browserbase Tool (`browserbase.py`)
-Unlike standard scrapers, this tool connects to a **remote headless browser session**.
-1. Establishes a WebSocket connection to the cloud.
-2. Waits **25 seconds** for JavaScript/React components on Kayak to fully render.
-3. Converts the complex DOM into clean, readable Markdown for the AI to process.
+Connects to a remote Chromium instance to handle JavaScript-heavy sites. It extracts full-page HTML and converts it to Markdown, ensuring the LLM receives clean, context-rich data without the noise of raw code.
 
-### Kayak Search Tool (`kayak.py`)
-A specialized utility that formats user dates and locations into search-friendly URL strings like:
-`https://www.kayak.co.in/hotels/{location}/{check_in}/{check_out}/2adults`
+### Kayak Tool (`kayak.py`)
+Uses deterministic URL patterns to bypass search field interactions.
+`Input: Paris, 2024-10-15, 2adults` → `Output: https://www.kayak.co.in/hotels/Paris/2024-10-15/...`
 
 ---
 
-## � Troubleshooting
+## 🧪 Usage & Examples
 
-### 1. Connection Error / Browserbase
-- **Symptom**: "Tool Browserbase tool failed".
-- **Fix**: Check your `BROWSERBASE_API_KEY`. Ensure you have active credits on the dashboard.
+1. Launch: `streamlit run app.py`
+2. Configure: Paste Browserbase API Key in sidebar.
+3. Input: Location (**London**), Dates (**Oct 12-15**), Guests (**2**).
+4. Observe: Progress logs in the terminal show agents browsing and reasoning.
+5. Results: View pricing, amenities, and "Book Now" links.
 
-### 2. LLM Serialization Error
-- **Symptom**: `UnserializableReturnValueError`.
-- **Fix**: This was locally patched by changing `@st.cache_data` to `@st.cache_resource` in `app.py`.
+---
 
-### 3. LiteLLM Missing
-- **Symptom**: `ImportError: Fallback to LiteLLM is not available`.
-- **Fix**: Run `pip install litellm` within your active environment.
+## 🚨 Troubleshooting
 
-### 4. Windows Execution Policy
-- **Symptom**: Cannot activate scripts in PowerShell.
-- **Fix**: Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`.
+### 1. "UnserializableReturnValueError"
+Fixed by using `@st.cache_resource` instead of `@st.cache_data` for LLM objects.
+
+### 2. "ImportError: LiteLLM not found"
+Run `pip install litellm`. This is required for most advanced CrewAI integrations.
+
+### 3. OpenAI Quota (429 Error)
+Switch to **Groq** in `app.py` or use **Ollama** for local free inference.
+
+### 4. Playwright Brower Issues
+Run `playwright install chromium` explicitly in your active environment.
 
 ---
 
 ## 📈 Professional Repair Log Summary
 
-The current codebase includes these critical stability patches:
-- ✅ **Logo Recovery**: Restored missing `assets/` folder to prevent UI crashes.
-- ✅ **Memory Optimization**: Implemented `cache_resource` for LLM objects to avoid memory leaks and serialization bugs.
-- ✅ **Quota Resilience**: Added fallbacks to Groq and Ollama to handle OpenAI 429 errors.
-- ✅ **Validation Layer**: Built-in date and location sanity checks.
+- ✅ **Assets Fixed**: Restored `/assets` directory for UI stability.
+- ✅ **Validation Added**: Date and location sanity checks prevent infinite loops.
+- ✅ **Conda Reparation**: Fixed environment corruption issues.
+- ✅ **UI Optimized**: Added feedback icons and time estimates.
 
 ---
 
-**Built with ❤️ by [itsA-D](https://github.com/itsA-D)**  
-*Project Status: Production-Ready ✅*
+**Happy Travels! 🛫🏨**  
+*Maintained by ANKAN (NomadIQ Team)*
