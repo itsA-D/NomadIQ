@@ -1,0 +1,7 @@
+browserbase>=1.2.0
+crewai-tools>=0.38.1
+html2text>=2024.2.26
+playwright>=1.51.0
+python-dotenv>=1.1.0
+streamlit>=1.44.1
+litellm>=1.0.0
