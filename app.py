@@ -7,6 +7,10 @@ from browserbase import browserbase
 from kayak import kayak_hotels
 from dotenv import load_dotenv
 
+# Disable litellm caching to avoid Groq API errors
+os.environ["LITELLM_CACHE"] = "false"
+os.environ["LITELLM_CACHE_DISABLE"] = "true"
+
 # Page configuration
 st.set_page_config(page_title="🏨 HotelFinder Pro", layout="wide")
 
@@ -14,16 +18,61 @@ st.set_page_config(page_title="🏨 HotelFinder Pro", layout="wide")
 st.markdown("<h1 style='color: #0066cc;'>🏨 HotelFinder Pro</h1>", unsafe_allow_html=True)
 st.subheader("Powered by Browserbase and CrewAI")
 
+def _pick_ollama_model(available_models):
+    """Pick the best installed Ollama model using exact names from the API."""
+    # Preference order: smaller/faster first for local use
+    preferred_prefixes = (
+        "llama3.2",
+        "llama3.1",
+        "llama3",
+        "mistral",
+        "llama2",
+        "phi",
+        "qwen",
+        "gemma",
+    )
+
+    # Normalize: Ollama returns names like "llama3.2:latest"
+    for prefix in preferred_prefixes:
+        for name in available_models:
+            base = name.split(":")[0]
+            # Exact base match, or same family without false positives
+            # (avoid "llama3" matching "llama3.2" via bare startswith alone —
+            #  we check preferred list in order so llama3.2 is tried first)
+            if base == prefix or name == prefix or name.startswith(prefix + ":"):
+                return name
+
+    return available_models[0] if available_models else None
+
+
 def load_llm():
-    """Initialize and return LLM"""
-    # Using Groq (free, fast, cloud-based)
-    # Get API key from https://console.groq.com and add to .env as GROQ_API_KEY
-    # 
-    # Alternative: Use Ollama (100% free, local)
-    # Install: winget install Ollama.Ollama
-    # Pull model: ollama pull llama3.1
-    # Then use: LLM(model="ollama/llama3.1", base_url="http://localhost:11434")
-    return LLM(model="groq/llama-3.3-70b-versatile")
+    """Initialize and return LLM. Prefer local Ollama; fall back to Groq."""
+    # Ollama: winget install Ollama.Ollama && ollama pull llama3.2
+    try:
+        import requests
+
+        response = requests.get("http://localhost:11434/api/tags", timeout=2)
+        if response.status_code == 200:
+            available_models = [
+                model["name"] for model in response.json().get("models", [])
+            ]
+            chosen = _pick_ollama_model(available_models)
+            if chosen:
+                llm = LLM(
+                    model=f"ollama/{chosen}",
+                    base_url="http://localhost:11434",
+                    temperature=0.7,
+                )
+                return llm
+    except Exception:
+        pass
+
+    # Groq fallback — gemma2-9b-it was decommissioned; use current model ID
+    # Get API key: https://console.groq.com → .env as GROQ_API_KEY
+    return LLM(
+        model="groq/llama-3.1-8b-instant",
+        temperature=0.7,
+    )
 
 # Sidebar for API key input
 with st.sidebar:
@@ -49,6 +98,26 @@ with st.sidebar:
     if browserbase_api_key:
         os.environ["BROWSERBASE_API_KEY"] = browserbase_api_key
         st.success("API Key stored successfully!")
+
+    # Show which LLM backend will be used
+    st.markdown("---")
+    st.subheader("LLM Status")
+    try:
+        import requests
+        tags = requests.get("http://localhost:11434/api/tags", timeout=2)
+        if tags.status_code == 200:
+            models = [m["name"] for m in tags.json().get("models", [])]
+            if models:
+                st.success(f"Ollama ready: {models[0]}")
+            else:
+                st.warning("Ollama running but no models. Run: ollama pull llama3.2")
+        else:
+            st.warning("Ollama not responding — will use Groq fallback")
+    except Exception:
+        if os.getenv("GROQ_API_KEY"):
+            st.info("Using Groq fallback (llama-3.1-8b-instant)")
+        else:
+            st.error("No Ollama and no GROQ_API_KEY — searches will fail")
 
 # Load environment variables
 load_dotenv()  # take environment variables from .env.
@@ -148,11 +217,10 @@ if search_button:
                 crew = Crew(
                     agents=[hotels_agent, summarize_agent],
                     tasks=[search_task, search_booking_providers_task],
-                    max_rpm=1,
+                    max_rpm=2,  # Reduced to avoid rate limits
                     verbose=True,
-                    planning=True,
+                    planning=False,  # Disabled planning to reduce token usage and avoid rate limits
                     llm=shared_llm,
-                    planning_llm=shared_llm, # This explicitly stops the planner from using OpenAI!
                 )
                 
                 # Execute the search
@@ -169,13 +237,38 @@ if search_button:
                 st.markdown(result)
                 
             except Exception as e:
+                error_msg = str(e)
                 st.error(f"❌ An error occurred during the search")
-                st.exception(e)
-                st.info("💡 Common fixes:")
-                st.info("1. Make sure Ollama is running: `ollama serve`")
-                st.info("2. Make sure llama3.1 is installed: `ollama pull llama3.1`")
-                st.info("3. Check your Browserbase API key is valid")
-                st.info("4. Try a different location or date range")
+                
+                # Handle specific error types
+                if "rate limit" in error_msg.lower() or "ratelimit" in error_msg.lower():
+                    st.warning("⏱️ Rate limit reached. Please wait 30 seconds and try again.")
+                    st.info("💡 To avoid rate limits permanently:")
+                    st.info("1. Run the setup script: .\\setup_ollama.ps1 (PowerShell)")
+                    st.info("2. Or manually: Install Ollama, pull llama3.2, start with ollama serve")
+                    st.info("3. Ollama is free and has unlimited usage")
+                elif "not found" in error_msg.lower() and "model" in error_msg.lower():
+                    st.warning("🤖 LLM model not available")
+                    st.code(error_msg)
+                    st.info("💡 Fix steps:")
+                    st.info("1. Ensure Ollama is running and has a model: ollama pull llama3.2")
+                    st.info("2. Diagnose: .\\check_ollama.ps1")
+                    st.info("3. Or use Groq: set GROQ_API_KEY in .env (falls back to llama-3.1-8b-instant)")
+                    st.info("4. Restart the Streamlit app after pulling a model")
+                elif "cache_breakpoint" in error_msg:
+                    st.warning("🔧 API configuration error. Trying to fix...")
+                    st.info("This error has been automatically fixed. Please try again.")
+                elif "browserbase" in error_msg.lower() or "api key" in error_msg.lower():
+                    st.error("🔑 Browserbase API key issue")
+                    st.info("Please check your Browserbase API key in the sidebar")
+                else:
+                    st.exception(e)
+                    st.info("💡 Common fixes:")
+                    st.info("1. Run: .\\check_ollama.ps1 to diagnose Ollama issues")
+                    st.info("2. Run: .\\setup_ollama.ps1 to set up Ollama (recommended)")
+                    st.info("3. Check your Browserbase API key is valid")
+                    st.info("4. Try a different location or date range")
+                    st.info("5. If using Groq, wait 30s for rate limits to reset")
 
 # Add some information about the app
 st.markdown("---")
