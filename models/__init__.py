@@ -1,0 +1,2 @@
+"""Canonical application data contracts."""
+
